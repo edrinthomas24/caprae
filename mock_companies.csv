@@ -1,0 +1,4 @@
+name,tools,linkedin_presence,support_tickets_per_month,infra,AI_experiments
+AlphaTech,"['CRM', 'Zapier', 'Google Workspace']",True,120,"['AWS', 'Docker']",1
+BetaLogistics,"['Excel', 'QuickBooks']",False,30,['On-prem'],0
+CloudStream,"['CRM', 'HubSpot', 'Zapier']",True,200,"['GCP', 'Kubernetes']",2
