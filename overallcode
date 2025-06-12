@@ -1,0 +1,733 @@
+import React, { useState } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Building2, Zap, TrendingUp, Sparkles, Download, MessageSquare } from 'lucide-react';
+
+const AIReadinessEvaluator = () => {
+  // State to manage the current step of the multi-step form
+  const [currentStep, setCurrentStep] = useState(0);
+  // State to store all company data collected through the form
+  const [companyData, setCompanyData] = useState({
+    name: '',
+    industry: '',
+    employees: '',
+    revenue: '',
+    techStack: [], // Array to store selected tech stack options
+    cloudInfra: '',
+    // crmSystem: '', // This field was in the initial state but not used, removing for clarity
+    supportTickets: '',
+    salesProcess: '',
+    dataVolume: '',
+    linkedinPresence: false,
+    websiteTraffic: '',
+    currentAI: '',
+    // digitalMaturity: '' // This field was in the initial state but not used, removing for clarity
+  });
+  // State to store the calculated AI readiness results
+  const [results, setResults] = useState(null);
+  // State to control whether to show the assessment form or the results report
+  const [showResults, setShowResults] = useState(false);
+
+  // Predefined options for various form fields
+  const industries = ['SaaS', 'E-commerce', 'Manufacturing', 'Healthcare', 'Financial Services', 'Real Estate', 'Education', 'Other'];
+  const employeeRanges = ['1-10', '11-50', '51-200', '201-500', '500+'];
+  const revenueRanges = ['<$1M', '$1M-$5M', '$5M-$20M', '$20M-$100M', '$100M+'];
+  const techStackOptions = ['CRM (Salesforce/HubSpot)', 'Cloud Infrastructure', 'Data Analytics Tools', 'Marketing Automation', 'API Integrations', 'Business Intelligence', 'Customer Support Platform', 'E-commerce Platform'];
+  const cloudOptions = ['AWS', 'Azure', 'Google Cloud', 'On-premise only', 'Hybrid'];
+
+  // Function to calculate the AI readiness score and generate recommendations
+  const calculateAIReadiness = () => {
+    let score = 0; // Initialize score
+    let recommendations = [];
+    let quickWins = []; // Short-term actionable items
+    let strategicInitiatives = []; // Long-term strategic goals
+
+    // --- Scoring Logic Based on Company Data ---
+
+    // Tech Infrastructure Scoring (max 30 points)
+    if (companyData.techStack.includes('CRM (Salesforce/HubSpot)')) {
+      score += 8;
+      recommendations.push('Leverage existing CRM for AI-powered lead scoring and sales forecasting');
+    } else {
+      quickWins.push('Implement CRM system to enable AI-driven sales insights');
+    }
+
+    if (companyData.techStack.includes('Cloud Infrastructure')) {
+      score += 10;
+      recommendations.push('Utilize cloud scalability for advanced AI model training');
+    } else {
+      strategicInitiatives.push('Migrate to cloud infrastructure for scalable AI deployment');
+    }
+
+    if (companyData.techStack.includes('Data Analytics Tools')) {
+      score += 8;
+      recommendations.push('Enhance analytics with predictive AI models for deeper insights');
+    } else {
+      quickWins.push('Deploy analytics tools for AI-ready data collection and initial insights');
+    }
+
+    if (companyData.techStack.includes('API Integrations')) {
+      score += 4;
+      recommendations.push('Build AI microservices using existing API infrastructure for modular solutions');
+    }
+
+    // Cloud Readiness (max 15 points)
+    if (['AWS', 'Azure', 'Google Cloud'].includes(companyData.cloudInfra)) {
+      score += 15;
+      recommendations.push(`Utilize ${companyData.cloudInfra} AI/ML services for rapid deployment and managed solutions`);
+    } else if (companyData.cloudInfra === 'Hybrid') {
+      score += 10;
+      strategicInitiatives.push('Optimize hybrid cloud environment for AI workloads and data locality');
+    } else {
+      strategicInitiatives.push('Cloud migration is essential for future AI scalability and access to managed services');
+    }
+
+    // Operational Scale (max 20 points)
+    // Points awarded based on employee count
+    const employeeScoreMap = { '1-10': 2, '11-50': 5, '51-200': 10, '201-500': 15, '500+': 20 };
+    score += employeeScoreMap[companyData.employees] || 0; // Add score, default to 0 if not selected
+
+    // Points awarded based on annual revenue
+    const revenueScoreMap = { '<$1M': 2, '$1M-$5M': 5, '$5M-$20M': 10, '$20M-$100M': 15, '$100M+': 20 };
+    score += revenueScoreMap[companyData.revenue] || 0; // Add score, default to 0 if not selected
+
+    // Customer Interaction Volume (max 15 points)
+    const ticketScore = parseInt(companyData.supportTickets) || 0; // Convert to number, default to 0 if invalid
+    if (ticketScore > 500) {
+      score += 15;
+      recommendations.push('Deploy AI chatbots for first-level support automation to reduce agent load');
+      strategicInitiatives.push('Implement natural language processing (NLP) for advanced ticket analysis');
+    } else if (ticketScore > 100) {
+      score += 10;
+      recommendations.push('Implement AI-assisted support ticket routing and categorization');
+      quickWins.push('Automate responses for common support queries');
+    } else if (ticketScore > 50) {
+      score += 5;
+      quickWins.push('Start with AI-powered FAQ automation or knowledge base enhancements');
+    }
+
+    // Digital Presence (max 10 points)
+    if (companyData.linkedinPresence) {
+      score += 5;
+      recommendations.push('Use AI for social media content optimization and sentiment analysis');
+      quickWins.push('Explore AI tools for automated social media scheduling and engagement');
+    }
+
+    const trafficScore = parseInt(companyData.websiteTraffic) || 0; // Convert to number, default to 0 if invalid
+    if (trafficScore > 10000) {
+      score += 5;
+      recommendations.push('Implement AI-driven website personalization and dynamic content delivery');
+      strategicInitiatives.push('Utilize AI for advanced user behavior analytics and conversion optimization');
+    } else if (trafficScore > 1000) {
+      score += 3;
+      quickWins.push('Deploy AI chatbot for website visitor engagement and lead qualification');
+    }
+
+    // Current AI Adoption (max 10 points)
+    if (companyData.currentAI === 'Active') {
+      score += 10;
+      recommendations.push('Scale existing AI initiatives across other departments or business units');
+      strategicInitiatives.push('Invest in advanced AI research and development for competitive advantage');
+    } else if (companyData.currentAI === 'Pilot') {
+      score += 6;
+      recommendations.push('Expand successful AI pilots to full production deployment');
+      quickWins.push('Refine existing AI models based on pilot feedback and performance metrics');
+    } else if (companyData.currentAI === 'Planning') {
+      score += 3;
+      quickWins.push('Execute a focused AI pilot program in a highest-impact area (e.g., customer support)');
+    } else { // 'None'
+      quickWins.push('Start with an AI readiness assessment and identify initial pilot opportunities');
+      strategicInitiatives.push('Develop an organizational AI strategy and secure executive buy-in');
+    }
+
+    // Industry-specific recommendations
+    const industryRecs = {
+      'SaaS': [
+        'Implement predictive churn analysis to proactively retain customers',
+        'Leverage AI-powered feature usage analytics for product roadmap decisions',
+        'Automate customer onboarding with intelligent workflows'
+      ],
+      'E-commerce': [
+        'Develop a personalized product recommendation engine for increased sales',
+        'Implement dynamic pricing optimization based on real-time market data',
+        'Enhance inventory forecasting with AI to minimize stockouts and overstock'
+      ],
+      'Manufacturing': [
+        'Deploy predictive maintenance systems for machinery to reduce downtime',
+        'Optimize supply chain logistics and demand forecasting with AI',
+        'Automate quality control processes using computer vision'
+      ],
+      'Healthcare': [
+        'Utilize AI for patient data analytics to improve diagnostics and treatment plans',
+        'Optimize appointment scheduling and resource allocation using AI',
+        'Enhance compliance monitoring and fraud detection with intelligent systems'
+      ],
+      'Financial Services': [
+        'Implement advanced AI-driven fraud detection systems',
+        'Automate risk assessment and loan underwriting processes',
+        'Analyze customer behavior with AI for personalized financial advice and product offerings'
+      ]
+    };
+
+    // Add industry-specific recommendations if applicable
+    if (industryRecs[companyData.industry]) {
+      recommendations.push(...industryRecs[companyData.industry]);
+    }
+
+    // Ensure score doesn't exceed 100
+    score = Math.min(score, 100);
+
+    // Determine the overall readiness level based on the final score
+    let readinessLevel = '';
+    let readinessColor = '';
+    if (score >= 80) {
+      readinessLevel = 'AI-Native Ready';
+      readinessColor = '#10b981'; // Green
+    } else if (score >= 60) {
+      readinessLevel = 'AI-Forward';
+      readinessColor = '#3b82f6'; // Blue
+    } else if (score >= 40) {
+      readinessLevel = 'AI-Curious';
+      readinessColor = '#f59e0b'; // Amber
+    } else {
+      readinessLevel = 'AI-Beginner';
+      readinessColor = '#ef4444'; // Red
+    }
+
+    // Return all calculated results and recommendations
+    return {
+      score,
+      readinessLevel,
+      readinessColor,
+      // Slice arrays to limit the number of displayed recommendations
+      recommendations: recommendations.slice(0, 6),
+      quickWins: quickWins.slice(0, 4),
+      strategicInitiatives: strategicInitiatives.slice(0, 4),
+      estimatedROI: calculateROI(score, companyData),
+      implementationTimeline: getTimeline(score)
+    };
+  };
+
+  // Calculates estimated ROI based on readiness score and revenue
+  const calculateROI = (score, data) => {
+    // Multiplier for ROI based on company revenue, higher revenue means higher potential ROI
+    const revenueMultiplier = { '<$1M': 1, '$1M-$5M': 2, '$5M-$20M': 3, '$20M-$100M': 4, '$100M+': 5 };
+    const baseROI = (score / 100) * 25; // Base 25% ROI for highly ready companies
+    const multiplier = revenueMultiplier[data.revenue] || 1; // Get multiplier, default to 1
+    return Math.round(baseROI * multiplier); // Return rounded ROI percentage
+  };
+
+  // Determines estimated implementation timeline based on readiness score
+  const getTimeline = (score) => {
+    if (score >= 80) return '3-6 months';
+    if (score >= 60) return '6-12 months';
+    if (score >= 40) return '12-18 months';
+    return '18-24 months';
+  };
+
+  // Handles input changes for text and select fields
+  const handleInputChange = (field, value) => {
+    setCompanyData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handles changes for the tech stack checkboxes
+  const handleTechStackChange = (tech) => {
+    setCompanyData(prev => ({
+      ...prev,
+      // If tech is already in the array, remove it; otherwise, add it
+      techStack: prev.techStack.includes(tech) 
+        ? prev.techStack.filter(t => t !== tech)
+        : [...prev.techStack, tech]
+    }));
+  };
+
+  // Handles the submission of the form, calculates results, and shows the report
+  const handleSubmit = () => {
+    // Basic validation before submission
+    if (!companyData.name || !companyData.industry || !companyData.employees || !companyData.revenue) {
+      alert('Please fill in all required Company Overview fields before generating the report.');
+      return;
+    }
+    // More comprehensive validation could be added for other steps as well.
+
+    const calculatedResults = calculateAIReadiness();
+    setResults(calculatedResults);
+    setShowResults(true); // Switch to results view
+  };
+
+  // Function to generate and download a JSON report
+  const generateReport = () => {
+    // Structure the data for the report
+    const report = {
+      company: companyData.name,
+      timestamp: new Date().toISOString(),
+      score: results.score,
+      level: results.readinessLevel,
+      recommendations: results.recommendations,
+      quickWins: results.quickWins,
+      strategicInitiatives: results.strategicInitiatives,
+      estimatedROI: results.estimatedROI,
+      timeline: results.implementationTimeline,
+      // Optionally include raw company data in the report for full context
+      companyDataSnapshot: companyData
+    };
+    
+    // Create a Blob from the JSON data and trigger a download
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${companyData.name.replace(/\s+/g, '_')}_AI_Readiness_Report.json`;
+    document.body.appendChild(a); // Append to body to make it clickable
+    a.click(); // Programmatically click the link to trigger download
+    document.body.removeChild(a); // Clean up the element
+    URL.revokeObjectURL(url); // Release the object URL
+  };
+
+  // Define the steps for the multi-step form
+  const steps = [
+    {
+      title: "Company Overview",
+      fields: ['name', 'industry', 'employees', 'revenue'], // Fields belonging to this step
+      icon: <Building2 className="w-6 h-6" />
+    },
+    {
+      title: "Technology Stack",
+      fields: ['techStack', 'cloudInfra'],
+      icon: <Zap className="w-6 h-6" />
+    },
+    {
+      title: "Operations & Data",
+      fields: ['supportTickets', 'salesProcess', 'dataVolume'],
+      icon: <MessageSquare className="w-6 h-6" />
+    },
+    {
+      title: "Digital Presence & AI Adoption",
+      fields: ['linkedinPresence', 'websiteTraffic', 'currentAI'],
+      icon: <TrendingUp className="w-6 h-6" />
+    }
+  ];
+
+  // --- Conditional Rendering: Show Results Report if showResults is true ---
+  if (showResults) {
+    // Data for the Pie Chart visualizing the score
+    const scoreData = [
+      { name: 'Your Score', value: results.score, color: results.readinessColor },
+      { name: 'Remaining Potential', value: 100 - results.score, color: '#e5e7eb' }
+    ];
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 sm:p-8 font-inter">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12 w-full max-w-6xl">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="w-9 h-9 text-blue-600" />
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">AI Readiness Report</h1>
+            </div>
+            <p className="text-lg sm:text-xl text-gray-600">{companyData.name}</p>
+          </div>
+
+          {/* Score & ROI Cards */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl p-6 text-white flex flex-col justify-between transform transition-transform duration-300 hover:scale-105">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">Readiness Score</h3>
+                <TrendingUp className="w-7 h-7" />
+              </div>
+              <div className="text-4xl sm:text-5xl font-bold mb-2">{results.score}/100</div>
+              <div className="text-lg opacity-90">{results.readinessLevel}</div>
+            </div>
+
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white flex flex-col justify-between transform transition-transform duration-300 hover:scale-105">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold">Estimated ROI</h3>
+                <Zap className="w-7 h-7" />
+              </div>
+              <div className="text-4xl sm:text-5xl font-bold mb-2">{results.estimatedROI}%</div>
+              <div className="text-lg opacity-90">Within {results.implementationTimeline}</div>
+            </div>
+          </div>
+
+          {/* Score Visualization */}
+          <div className="mb-8 p-6 bg-gray-50 rounded-2xl shadow-inner">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              Your AI Readiness Score Breakdown
+            </h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={scoreData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  labelLine={false}
+                >
+                  {scoreData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+            <p className="text-center text-gray-600 mt-4 text-lg">
+              Overall, your company is <span className="font-bold text-xl" style={{ color: results.readinessColor }}>{results.readinessLevel}</span> for AI adoption.
+            </p>
+          </div>
+
+          {/* Recommendations Sections */}
+          <div className="grid md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                <Zap className="w-5 h-5 text-blue-600" />
+                Quick Wins (0-6 months)
+              </h3>
+              <div className="space-y-3">
+                {results.quickWins.length > 0 ? (
+                  results.quickWins.map((win, index) => (
+                    <div key={index} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500 shadow-sm">
+                      <p className="text-gray-800">{win}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">No immediate quick wins identified. Focus on strategic initiatives.</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                <Building2 className="w-5 h-5 text-indigo-600" />
+                Strategic Initiatives (6-24 months)
+              </h3>
+              <div className="space-y-3">
+                {results.strategicInitiatives.length > 0 ? (
+                  results.strategicInitiatives.map((initiative, index) => (
+                    <div key={index} className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-500 shadow-sm">
+                      <p className="text-gray-800">{initiative}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">No specific strategic initiatives identified. Your current readiness is high.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8 p-6 bg-green-50 rounded-2xl shadow-inner">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              General AI Implementation Recommendations
+            </h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              {results.recommendations.length > 0 ? (
+                results.recommendations.map((rec, index) => (
+                  <div key={index} className="bg-green-100 p-4 rounded-lg border border-green-200 shadow-sm">
+                    <p className="text-gray-800">{rec}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 italic md:col-span-2">Based on your input, general recommendations will appear here.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+            <button
+              onClick={() => {
+                setShowResults(false); // Go back to the form view
+                setCurrentStep(0); // Reset to the first step
+                setCompanyData({ // Reset all company data for a new assessment
+                  name: '', industry: '', employees: '', revenue: '', techStack: [],
+                  cloudInfra: '', supportTickets: '', salesProcess: '', dataVolume: '',
+                  linkedinPresence: false, websiteTraffic: '', currentAI: ''
+                });
+                setResults(null); // Clear previous results
+              }}
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            >
+              <MessageSquare className="w-5 h-5" />
+              Start New Assessment
+            </button>
+            <button
+              onClick={generateReport}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              <Download className="w-5 h-5" />
+              Export Report (JSON)
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Rendering: Multi-step Assessment Form ---
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4 sm:p-8 font-inter">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12 w-full max-w-4xl">
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Sparkles className="w-9 h-9 text-blue-600" />
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">AI Readiness Evaluator</h1>
+          </div>
+          <p className="text-lg sm:text-xl text-gray-600">Assess your company's AI readiness and get strategic recommendations</p>
+        </div>
+
+        {/* Progress Bar and Step Title */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">{steps[currentStep].title}</h2>
+            <span className="text-sm text-gray-500">Step {currentStep + 1} of {steps.length}</span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Form Fields for Current Step */}
+        <div className="space-y-6">
+          {currentStep === 0 && (
+            <>
+              <div>
+                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                <input
+                  id="companyName"
+                  type="text"
+                  value={companyData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., Innovate Solutions Inc."
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="industry" className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                <select
+                  id="industry"
+                  value={companyData.industry}
+                  onChange={(e) => handleInputChange('industry', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select your industry</option>
+                  {industries.map(industry => (
+                    <option key={industry} value={industry}>{industry}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="employees" className="block text-sm font-medium text-gray-700 mb-2">Employee Count</label>
+                  <select
+                    id="employees"
+                    value={companyData.employees}
+                    onChange={(e) => handleInputChange('employees', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                    required
+                  >
+                    <option value="">Select range</option>
+                    {employeeRanges.map(range => (
+                      <option key={range} value={range}>{range}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="revenue" className="block text-sm font-medium text-gray-700 mb-2">Annual Revenue</label>
+                  <select
+                    id="revenue"
+                    value={companyData.revenue}
+                    onChange={(e) => handleInputChange('revenue', e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                    required
+                  >
+                    <option value="">Select range</option>
+                    {revenueRanges.map(range => (
+                      <option key={range} value={range}>{range}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+
+          {currentStep === 1 && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Current Tech Stack (Select all that apply)</label>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {techStackOptions.map(tech => (
+                    <label key={tech} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors duration-200">
+                      <input
+                        type="checkbox"
+                        checked={companyData.techStack.includes(tech)}
+                        onChange={() => handleTechStackChange(tech)}
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{tech}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label htmlFor="cloudInfra" className="block text-sm font-medium text-gray-700 mb-2">Cloud Infrastructure</label>
+                <select
+                  id="cloudInfra"
+                  value={companyData.cloudInfra}
+                  onChange={(e) => handleInputChange('cloudInfra', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select cloud provider</option>
+                  {cloudOptions.map(cloud => (
+                    <option key={cloud} value={cloud}>{cloud}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          {currentStep === 2 && (
+            <>
+              <div>
+                <label htmlFor="supportTickets" className="block text-sm font-medium text-gray-700 mb-2">Monthly Customer Support Tickets</label>
+                <input
+                  id="supportTickets"
+                  type="number"
+                  value={companyData.supportTickets}
+                  onChange={(e) => handleInputChange('supportTickets', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., 250 (approximate)"
+                  min="0"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="salesProcess" className="block text-sm font-medium text-gray-700 mb-2">Sales Process Maturity</label>
+                <select
+                  id="salesProcess"
+                  value={companyData.salesProcess}
+                  onChange={(e) => handleInputChange('salesProcess', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select maturity level</option>
+                  <option value="Manual">Manual/Ad-hoc processes</option>
+                  <option value="Documented">Documented processes in place</option>
+                  <option value="Automated">Partially automated (e.g., CRM workflows)</option>
+                  <option value="Optimized">Fully optimized with continuous improvement</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="dataVolume" className="block text-sm font-medium text-gray-700 mb-2">Data Volume (GB processed monthly)</label>
+                <input
+                  id="dataVolume"
+                  type="number"
+                  value={companyData.dataVolume}
+                  onChange={(e) => handleInputChange('dataVolume', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., 500 (approximate)"
+                  min="0"
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {currentStep === 3 && (
+            <>
+              <div>
+                <label htmlFor="linkedinPresence" className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors duration-200">
+                  <input
+                    id="linkedinPresence"
+                    type="checkbox"
+                    checked={companyData.linkedinPresence}
+                    onChange={(e) => handleInputChange('linkedinPresence', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700">Active LinkedIn/social media presence (company profile, regular posts)</span>
+                </label>
+              </div>
+              <div>
+                <label htmlFor="websiteTraffic" className="block text-sm font-medium text-gray-700 mb-2">Monthly Website Traffic (Visitors)</label>
+                <input
+                  id="websiteTraffic"
+                  type="number"
+                  value={companyData.websiteTraffic}
+                  onChange={(e) => handleInputChange('websiteTraffic', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  placeholder="e.g., 15000"
+                  min="0"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="currentAI" className="block text-sm font-medium text-gray-700 mb-2">Current AI Adoption Status</label>
+                <select
+                  id="currentAI"
+                  value={companyData.currentAI}
+                  onChange={(e) => handleInputChange('currentAI', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                  required
+                >
+                  <option value="">Select current status</option>
+                  <option value="None">No AI initiatives</option>
+                  <option value="Planning">Planning/Research phase (exploring AI)</option>
+                  <option value="Pilot">Pilot programs running (testing AI in specific areas)</option>
+                  <option value="Active">Active AI implementations (AI widely used in some areas)</option>
+                </select>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
+            disabled={currentStep === 0}
+            className={`px-6 py-3 rounded-lg transition-all duration-300 font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              currentStep === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                : 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500'
+            }`}
+          >
+            Previous
+          </button>
+          
+          {currentStep < steps.length - 1 ? (
+            <button
+              onClick={() => setCurrentStep(currentStep + 1)}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 font-semibold flex items-center gap-2 justify-center focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              <Sparkles className="w-5 h-5" />
+              Generate AI Readiness Report
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AIReadinessEvaluator;
